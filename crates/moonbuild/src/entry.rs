@@ -23,7 +23,6 @@ use moonutil::path::PathComponent;
 use n2::graph::FileId;
 use n2::load::State;
 use n2::progress::{DumbConsoleProgress, FancyConsoleProgress, Progress};
-use n2::terminal;
 use std::collections::HashSet;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -52,12 +51,16 @@ fn default_parallelism() -> anyhow::Result<usize> {
     Ok(usize::from(par))
 }
 
+fn use_fancy() -> bool {
+    std::env::var("MOON_USE_FANCY_DIAGNOSTICS").is_ok_and(|v| v != "0") || n2::terminal::use_fancy()
+}
+
 #[allow(clippy::type_complexity)]
 fn create_progress_console(
     callback: Option<Box<dyn Fn(&str) + Send>>,
     verbose: bool,
 ) -> Box<dyn Progress> {
-    if terminal::use_fancy() {
+    if use_fancy() {
         Box::new(FancyConsoleProgress::new(verbose, callback))
     } else {
         Box::new(DumbConsoleProgress::new(verbose, callback))
@@ -96,7 +99,7 @@ pub fn n2_simple_run_interface(
     moonbuild_opt: &MoonbuildOpt,
 ) -> anyhow::Result<Option<usize>> {
     let logger = Arc::new(Mutex::new(vec![]));
-    let use_fancy = terminal::use_fancy();
+    let use_fancy = use_fancy();
 
     let catcher = Arc::clone(&logger);
     let output_json = moonbuild_opt.output_json;
@@ -150,7 +153,7 @@ pub fn n2_run_interface(
     moonbuild_opt: &MoonbuildOpt,
 ) -> anyhow::Result<Option<usize>> {
     let logger = Arc::new(Mutex::new(vec![]));
-    let use_fancy = terminal::use_fancy();
+    let use_fancy = use_fancy();
 
     let catcher = Arc::clone(&logger);
     let output_json = moonbuild_opt.output_json;
